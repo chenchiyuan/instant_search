@@ -3,3 +3,6 @@ __author__ = 'chenchiyuan'
 
 #mongoengine
 TEXT_MAX = 48
+
+#index
+SEARCH_KEY_PREFIX = "CACHE:SEARCH:"
