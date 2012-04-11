@@ -55,3 +55,6 @@ class SearchIndex(object):
         return {
             words: tags
         }
+
+if __name__ == '__main__':
+    print("success")
