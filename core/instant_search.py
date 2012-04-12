@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 __author__ = 'chenchiyuan'
+
 from core.cache import cache
 from core.const import SEARCH_KEY_PREFIX
 from mmseg import seg_txt
@@ -13,23 +14,24 @@ class SearchIndex(object):
         self.cache_key_prefix = SEARCH_KEY_PREFIX
 
     @staticmethod
+    def cache_key_prefix():
+        return SEARCH_KEY_PREFIX
+
+    @staticmethod
     def __to_unicode(word):
         if isinstance(word, (unicode, type(None))):
-            return word
+            return word.encode('utf-8')
         try:
             return unicode(word, 'utf-8')
         except:
-            logger.debug("cannot unicode word %s" %word)
-            return None
+            return word.encode('utf-8')
 
     @staticmethod
     def score(word):
         logger.debug("will score a word %s" %word)
 
-    def to_info(self):
-        pass
-
     def parse(self, words):
+        words = SearchIndex.__to_unicode(words)
         _seg_words = [word for word in seg_txt(words)]
         seg_words = filter(None, _seg_words)
         results = []
@@ -43,7 +45,7 @@ class SearchIndex(object):
 
     def add(self, word, key, score):
         try:
-            cache.zadd(self.cache_key_prefix + word , key= key, score=score)
+            cache.zadd(word, score, key)
         except:
             logger.debug("cannot add search index key: %s score: %s" %(key, score))
 
@@ -56,21 +58,31 @@ class SearchIndex(object):
 
     def search(self, words):
         keys = self.parse(words)
-        print(keys)
         try:
-            cache.zinterstore(words, keys)
+            cache_words = slugify(unidecode(words))
+            cache.zinterstore(dest=self.cache_key_prefix + cache_words, keys=keys)
         except Exception as err:
             logger.error("Err is %s" %err)
             return None
 
-        cache_keys = cache.zrevrangebyscore(words, "+inf", "-inf")
+        cache_keys = cache.zrevrangebyscore(self.cache_key_prefix + cache_words, "+inf", "-inf")
         tags = []
         for cache_key in cache_keys:
-            tags.append(self.get(cache_key))
+            tags.append(cache.hgetall(cache_key))
         tags = filter(None, tags)
         return {
             words: tags
         }
 
-if __name__ == '__main__':
-    print("success")
+    def add_tag(self, tag):
+        if not tag:
+            return
+        words = self.parse(tag.name_zh)
+        words.extend(tag.name_en)
+        for word in words:
+            self.add(word=word, key=tag.cache_key, score=tag.score)
+
+
+
+
+

@@ -1,5 +1,6 @@
 # Django settings for search project.
 import os
+from mongoengine import connect
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -9,6 +10,8 @@ DB_HOST = "127.0.0.1"
 #mongo settings
 MONGO_PORT = 27107
 MONGO_DB = 'search'
+connect(MONGO_DB)
+
 # =========== #
 #redis settings
 REDIS_PORT = 6379
@@ -136,7 +139,7 @@ INSTALLED_APPS = (
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'tag',
+    'tags',
 )
 
 # A sample logging configuration. The only tangible logging
